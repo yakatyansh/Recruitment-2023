@@ -6,24 +6,61 @@ icons = document.querySelectorAll(".row i");
 translateBtn = document.querySelector("button"),
 
 
+
+
 translateBtn.addEventListener("click", () => {
     let text = fromText.value.trim(),
     translateFrom = selectTag[0].value,
     translateTo = selectTag[1].value;
     if(!text) return;
     toText.setAttribute("placeholder", "Translating...");
-    
-    // Todo: add api fetch from https://mymemory.translated.net/doc/spec.php
+    let apiUrl = `https://api.mymemory.translated.net/get?q=${text}&langpair=${translateFrom}|${translateTo}`;
+    fetch(apiUrl)
+  .then(response => response.json())
+  .then(data => {
+  
+    toText.value = data.responseData.translatedText;
+    data.matches.forEach(data => {
+        if(data.id === 0) {
+            toText.value = data.translation;
+        }
+    });
+    toText.setAttribute("placeholder", "Translation");
+    })
+  .catch(error => {
+    console.error('Error:', error);
+  });
+
+
 
 });
 
 icons.forEach(icon => {
     icon.addEventListener("click", ({target}) => {
         if(!fromText.value || !toText.value) return;
-        
         // TODO: add code to copy to Clipboard for the icon with class fa-copy
+        if(target.classList.contains("fa-copy")) {
+            if (target.id == "from") {
+                navigator.clipboard.writeText(fromText.value);
 
-        // TODO: add code for speechSynthesis for icon with classname fa-volume-up (text to speech)
+            } else {
+                navigator.clipboard.writeText(toText.value);
+        }
+    }
+    else {
+        let utterance;
+        if(target.id == "from") {
+            utterance = new SpeechSynthesisUtterance(fromText.value);
+            utterance.lang = selectTag[0].value;
+        }
+        else {
+            utterance = new SpeechSynthesisUtterance(toText.value);
+            utterance.lang = selectTag[1].value;
+        }
+        speechSynthesis.speak(utterance);
+
+    }
+    
 
     });
 });
